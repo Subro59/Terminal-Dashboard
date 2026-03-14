@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminal Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Added SheetJS for .xlsx generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -31,16 +30,42 @@
         .tab-btn:not(.active) { color: #64748b; background: #1e293b; border-color: #334155; }
         .tab-btn:not(.active):hover { background: #334155; color: #cbd5e1; }
 
-        select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; }
+        input::placeholder { transition: color 0.3s ease; }
+        .found-shadow::placeholder { color: #94a3b8 !important; opacity: 1; font-style: italic; }
+
+        /* Modal styling */
+        #warning-modal { transition: all 0.3s ease; }
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-active { opacity: 1; transform: scale(1); }
     </style>
 </head>
 <body class="p-4 md:p-6">
+
+    <!-- Duplicate Warning Modal -->
+    <div id="warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass-card max-w-md w-full p-6 border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.2)]">
+            <div class="flex flex-col items-center text-center space-y-4">
+                <div class="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-2">
+                    <i class="fas fa-exclamation-triangle text-3xl text-rose-500 animate-pulse"></i>
+                </div>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Duplicate Entry Detected</h2>
+                <p id="warning-msg" class="text-slate-400 text-sm leading-relaxed">
+                    This TID has already been submitted for the selected date. Duplicate automated submissions are blocked.
+                </p>
+                <div class="bg-slate-900 p-4 rounded-lg w-full border border-slate-800">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resolution Instruction</p>
+                    <p class="text-xs text-blue-400 font-medium italic">Please enter this data manually into the Google Sheet if a double deployment is required.</p>
+                </div>
+                <button onclick="closeWarning()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl transition-all uppercase text-xs tracking-widest active:scale-95 shadow-lg">Acknowledged</button>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-full mx-auto space-y-4">
         <!-- Header -->
         <header class="flex flex-row justify-between items-start border-b border-slate-800 pb-4">
             <div>
-                <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Terminal Dashboard</h1>
+                <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Terminal Registry</h1>
                 <div class="flex items-center gap-4 mt-1">
                     <p id="status-text" class="text-slate-400 text-[9px] font-bold uppercase flex items-center gap-2">
                         <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
@@ -58,34 +83,28 @@
             </div>
         </header>
 
-        <!-- Dynamic Stats Grid -->
-        <section id="stats-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2">
-            <!-- Rendered by JS -->
-        </section>
+        <!-- Stats Grid -->
+        <section id="stats-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12 gap-2"></section>
 
         <!-- Main Registry Section -->
         <section class="glass-card overflow-hidden flex flex-col shadow-2xl">
             <div class="p-3 border-b border-slate-700/50 bg-slate-800/20 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                <div id="tabs-container" class="flex flex-wrap gap-1.5">
-                    <!-- Dynamic tabs -->
-                </div>
-                
+                <div id="tabs-container" class="flex flex-wrap gap-1.5"></div>
                 <div class="flex flex-grow justify-between items-center w-full xl:w-auto gap-4">
-                    <!-- Left side: Status indicators -->
-                    <div class="flex items-center gap-3 whitespace-nowrap ml-2">
+                    <div class="flex items-center gap-3 ml-2">
                          <span id="result-count" class="text-[9px] bg-slate-800 text-blue-400 px-2 py-1 rounded font-bold">0 Results</span>
                          <span id="page-info" class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Page 1 of 1</span>
                     </div>
-                    
-                    <!-- Right side: Actions & Search -->
                     <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button onclick="downloadFilteredData()" title="Download Search Results (.xlsx)" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white h-9 px-3 rounded-lg border border-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] font-bold">
-                            <i class="fas fa-file-excel"></i>
-                            <span class="hidden sm:inline">EXPORT EXCEL</span>
+                        <button onclick="copyCurrentSearch()" class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white h-9 px-3 rounded-lg border border-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] font-bold">
+                            <i class="fas fa-copy"></i><span class="hidden sm:inline">COPY DETAILS</span>
+                        </button>
+                        <button onclick="downloadFilteredData()" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white h-9 px-3 rounded-lg border border-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] font-bold">
+                            <i class="fas fa-file-excel"></i><span class="hidden sm:inline">EXPORT EXCEL</span>
                         </button>
                         <div class="relative w-full sm:w-72">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                            <input type="text" id="tableSearch" onkeyup="handleSearch()" placeholder="Search registry..." class="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-[11px] w-full focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all placeholder:text-slate-600">
+                            <input type="text" id="tableSearch" onkeyup="handleSearch()" placeholder="Search registry..." class="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-[11px] w-full focus:border-blue-500 outline-none">
                         </div>
                     </div>
                 </div>
@@ -111,19 +130,28 @@
 
         <!-- Quick Update Panel -->
         <section class="glass-card p-4 border-l-4 border-l-blue-500">
-            <div class="flex items-center gap-3 mb-4">
-                <i class="fas fa-edit text-blue-500 text-xs"></i>
-                <h2 class="text-[10px] font-black text-white uppercase tracking-widest">Update Terminal Status</h2>
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-edit text-blue-500 text-xs"></i>
+                    <h2 class="text-[10px] font-black text-white uppercase tracking-widest">Update Terminal Status</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="dba-indicator" class="text-[8px] font-black uppercase px-2 py-0.5 rounded transition-all opacity-0 bg-slate-800 text-slate-300 border border-slate-700 max-w-[200px] truncate">-</div>
+                    <div id="lookup-indicator" class="text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all opacity-0">TID MATCH FOUND</div>
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3">
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">Target Sheet</label>
-                    <select id="u-sheet" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-200">
-                    </select>
+                    <select id="u-sheet" onchange="handleTIDLookup()" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-200"></select>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">TID *</label>
-                    <input type="text" id="u-tid" placeholder="Enter TID" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none">
+                    <input type="text" id="u-tid" oninput="handleTIDLookup()" placeholder="Enter TID" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] text-slate-500 font-bold uppercase">POS S/N *</label>
+                    <input type="text" id="u-psn" placeholder="Serial No." class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none">
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">Roll-out By</label>
@@ -131,7 +159,7 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">Roll-out Date</label>
-                    <input type="date" id="u-rdate" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-400">
+                    <input type="text" id="u-rdate" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" placeholder="DD-MM-YYYY" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-400">
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">App. Version</label>
@@ -193,14 +221,9 @@
             
             const callback = 'cb_' + Date.now();
             window[callback] = (res) => {
-                if (!res || typeof res !== 'object') {
-                    setStatus('Error', 'bg-rose-500');
-                    return;
-                }
-
+                if (!res) return setStatus('Error', 'bg-rose-500');
                 allSheetsData = {};
                 sheetHeaders = {};
-                
                 Object.keys(res).forEach(sheetName => {
                     const rows = res[sheetName];
                     if (Array.isArray(rows) && rows.length > 0) {
@@ -208,23 +231,16 @@
                         allSheetsData[sheetName] = rows.slice(1);
                     }
                 });
-
                 const sheetNames = Object.keys(allSheetsData);
                 if (sheetNames.length > 0) {
                     setStatus('Connected', 'bg-emerald-500');
-                    if (!currentSheet || !allSheetsData[currentSheet]) {
-                        currentSheet = sheetNames[0];
-                    }
+                    if (!currentSheet || !allSheetsData[currentSheet]) currentSheet = sheetNames[0];
                     renderDynamicUI(sheetNames);
                     switchSheet(currentSheet);
-                } else {
-                    setStatus('Empty', 'bg-amber-500');
                 }
-                
                 if (syncIcon) syncIcon.classList.remove('fa-spin');
                 delete window[callback];
             };
-
             const script = document.createElement('script');
             script.src = `${BASE_API_URL}?action=fetchData&callback=${callback}&_t=${Date.now()}`; 
             document.body.appendChild(script);
@@ -253,12 +269,9 @@
 
             const statsGrid = document.getElementById('stats-grid');
             statsGrid.innerHTML = '';
-            const statColors = ['border-blue-500', 'border-emerald-500', 'border-amber-500', 'border-rose-500', 'border-indigo-500', 'border-cyan-500', 'border-purple-500', 'border-orange-500', 'border-pink-500', 'border-teal-500', 'border-yellow-500', 'border-red-500'];
-            
             sheetNames.forEach((name, i) => {
-                const color = statColors[i % statColors.length];
                 const card = document.createElement('div');
-                card.className = `glass-card p-2 border-b-2 ${color} transition-all hover:bg-slate-800/40 cursor-pointer`;
+                card.className = `glass-card p-2 border-b-2 border-blue-500 transition-all hover:bg-slate-800/40 cursor-pointer`;
                 card.onclick = () => switchSheet(name);
                 card.innerHTML = `
                     <p class="text-[8px] font-black uppercase tracking-tighter opacity-70 truncate">${name.replace(' LIVE', '')}</p>
@@ -266,91 +279,27 @@
                 `;
                 statsGrid.appendChild(card);
             });
-
-            const versionCard = document.createElement('div');
-            versionCard.className = 'glass-card p-2 border-b-2 border-slate-500 sm:col-span-2';
-            versionCard.innerHTML = `
-                <p class="text-slate-400 text-[8px] font-black uppercase tracking-widest">APP VERSIONS</p>
-                <div id="version-container" class="mt-0.5 flex flex-wrap gap-1 max-h-5 overflow-hidden"></div>
-                <div id="version-bars" class="w-full h-1 bg-slate-800 rounded-full flex overflow-hidden mt-1"></div>
-            `;
-            statsGrid.appendChild(versionCard);
         }
 
         function switchSheet(sheetName) {
             currentSheet = sheetName;
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            tabButtons.forEach(btn => {
-                btn.classList.toggle('active', btn.id === `tab-${sheetName}`);
-            });
-
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.id === `tab-${sheetName}`));
             filteredData = [...(allSheetsData[sheetName] || [])];
             currentPage = 1;
-            updateVersionStats();
             renderTable();
-        }
-
-        function updateVersionStats() {
-            const currentHeaders = sheetHeaders[currentSheet] || [];
-            const versionIdx = currentHeaders.findIndex(h => h && String(h).trim().toUpperCase() === 'APP. VERSION');
-            const currentData = allSheetsData[currentSheet] || [];
-            
-            const versions = {};
-            if (versionIdx !== -1) {
-                currentData.forEach(r => {
-                    const val = r[versionIdx];
-                    const ver = (val !== undefined && val !== null && String(val).trim() !== '') ? String(val).trim() : 'N/A';
-                    versions[ver] = (versions[ver] || 0) + 1;
-                });
-            }
-            
-            const container = document.getElementById('version-container');
-            const bars = document.getElementById('version-bars');
-            if (!container || !bars) return;
-
-            container.innerHTML = '';
-            bars.innerHTML = '';
-
-            const colors = ['bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
-            let colorIdx = 0;
-            const versionKeys = Object.keys(versions).sort();
-            
-            versionKeys.forEach(v => {
-                const count = versions[v];
-                const color = colors[colorIdx % colors.length];
-                const span = document.createElement('span');
-                span.className = 'text-[7px] text-slate-400 font-bold bg-slate-900/50 px-1 rounded';
-                span.innerHTML = `${v}: ${count}`;
-                container.appendChild(span);
-
-                const segment = document.createElement('div');
-                const percent = (count / (currentData.length || 1)) * 100;
-                segment.className = `h-full ${color}`;
-                segment.style.width = `${percent}%`;
-                bars.appendChild(segment);
-                colorIdx++;
-            });
+            handleTIDLookup(); 
         }
 
         function renderTable() {
             const headerRow = document.getElementById('terminalTableHeader');
             const tbody = document.getElementById('terminalTableBody');
-            if (!tbody || !headerRow) return;
-
             const headers = sheetHeaders[currentSheet] || [];
-            if (headers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="30" class="p-10 text-center text-slate-500 italic">No records found.</td></tr>';
-                return;
-            }
+            if (!tbody || headers.length === 0) return;
 
-            // Define columns to hide for PBL
-            const hideForPBL = ['REMARKS', 'CONFIGURE BY'];
             const isPBL = currentSheet.toUpperCase().includes('PBL');
-
-            // Find indices of columns to show
+            const hideForPBL = ['REMARKS', 'CONFIGURE BY'];
             const visibleIndices = headers.map((h, idx) => {
-                const label = (h || '').toUpperCase();
-                if (isPBL && hideForPBL.includes(label)) return null;
+                if (isPBL && hideForPBL.includes((h || '').toUpperCase())) return null;
                 return idx;
             }).filter(idx => idx !== null);
 
@@ -366,42 +315,23 @@
             headerRow.innerHTML = headerHtml;
 
             const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
-            const start = (currentPage - 1) * pageSize;
-            const pageData = filteredData.slice(start, start + pageSize);
+            const pageData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
             let bodyHtml = '';
             pageData.forEach(row => {
                 bodyHtml += `<tr class="hover:bg-slate-800/30 border-b border-slate-800/20">`;
                 visibleIndices.forEach(idx => {
-                    let val = row[idx];
-                    if (val === undefined || val === null || String(val).trim() === '') val = '-';
-                    const h = headers[idx];
-                    const label = (h || '').toUpperCase();
+                    let val = row[idx] ?? '-';
+                    const label = (headers[idx] || '').toUpperCase();
                     let cellClass = "p-2";
                     let content = val;
-
                     if (label === 'TID') cellClass += " font-black text-blue-400 sticky-col";
                     if (label.includes('DATE')) content = formatDateReadable(val);
-                    if (label === 'APP. VERSION') content = `<span class="px-1.5 py-0.5 bg-slate-800 rounded text-purple-400 font-bold">${val}</span>`;
-                    
-                    // Display fix: Ensure display shows leading zero for specific columns
-                    if (label === 'BANK CONT. PERSON NUMBER' || label === 'SIM NUMBER') {
-                        let strVal = String(val).trim();
-                        if (strVal !== '-' && strVal !== '' && !strVal.startsWith('0')) {
-                             content = '0' + strVal;
-                        }
-                    }
-
                     bodyHtml += `<td class="${cellClass}">${content}</td>`;
                 });
                 bodyHtml += `</tr>`;
             });
-
-            if (filteredData.length === 0) {
-                bodyHtml = `<tr><td colspan="${visibleIndices.length}" class="p-20 text-center text-slate-500 italic">No matching records.</td></tr>`;
-            }
-
-            tbody.innerHTML = bodyHtml;
+            tbody.innerHTML = bodyHtml || '<tr><td class="p-10 text-center">No matching records.</td></tr>';
             document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
             document.getElementById('result-count').textContent = `${filteredData.length} Results`;
             document.getElementById('prev-btn').disabled = currentPage === 1;
@@ -422,101 +352,130 @@
             document.querySelector('.table-container').scrollTop = 0;
         }
 
-        function downloadFilteredData() {
-            if (!filteredData || filteredData.length === 0) {
-                showToast("No data to download", "bg-amber-600");
+        function handleTIDLookup() {
+            const tidInput = document.getElementById('u-tid').value.trim();
+            const targetSheet = document.getElementById('u-sheet').value;
+            const indicator = document.getElementById('lookup-indicator');
+            const dbaIndicator = document.getElementById('dba-indicator');
+            const fields = {
+                rby: document.getElementById('u-rby'),
+                rdate: document.getElementById('u-rdate'),
+                ver: document.getElementById('u-ver'),
+                rem: document.getElementById('u-rem')
+            };
+
+            if (!tidInput || !targetSheet) {
+                indicator.style.opacity = '0';
+                dbaIndicator.style.opacity = '0';
+                Object.values(fields).forEach(el => { el.placeholder = el.id === 'u-rdate' ? 'DD-MM-YYYY' : '...'; el.classList.remove('found-shadow'); });
                 return;
             }
 
-            const rawHeaders = sheetHeaders[currentSheet] || [];
-            const headers = rawHeaders.map(h => String(h).toUpperCase());
-            
-            // Format data for XLSX export
-            const finalData = [rawHeaders]; // Start with headers
+            const headers = sheetHeaders[targetSheet] || [];
+            const dataRows = allSheetsData[targetSheet] || [];
+            const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
+            const dbaIdx = headers.findIndex(h => h?.toUpperCase() === 'DBA NAME');
+            const rByIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT BY');
+            const rDateIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT DATE');
+            const verIdx = headers.findIndex(h => h?.toUpperCase() === 'APP. VERSION');
+            const remIdx = headers.findIndex(h => h?.toUpperCase() === 'ENG. REMARKS');
 
-            filteredData.forEach(row => {
-                const rowObj = [];
-                row.forEach((cell, idx) => {
-                    const header = headers[idx] || "";
-                    let val = cell;
+            const match = dataRows.find(row => String(row[tidIdx]).trim() === tidInput);
 
-                    // Fix 1: Handle Dates (Human Readable)
-                    if (header.includes("DATE") && val && val !== "-" && val !== "null") {
-                        val = formatDateReadable(val);
-                    }
-
-                    // Fix 2: Handle "BANK CONT. PERSON NUMBER" and "SIM NUMBER" (Add leading zero)
-                    if (header === 'BANK CONT. PERSON NUMBER' || header === 'SIM NUMBER') {
-                        let strVal = String(val).trim();
-                        if (strVal !== '-' && strVal !== '' && !strVal.startsWith('0')) {
-                            val = '0' + strVal;
-                        }
-                    }
-
-                    // Fix 3: Force Large Numbers/IDs/Phones to be strings
-                    const needsStringForce = header.includes("MID") || 
-                                             header.includes("NUMBER") || 
-                                             header.includes("S/N") || 
-                                             header.includes("SIM") || 
-                                             header.includes("TID");
-
-                    if (needsStringForce && val !== null && val !== undefined && val !== "-") {
-                        rowObj.push({ v: String(val).trim(), t: 's' }); 
-                    } else {
-                        rowObj.push(val);
-                    }
-                });
-                finalData.push(rowObj);
-            });
-
-            try {
-                const worksheet = XLSX.utils.aoa_to_sheet(finalData);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, currentSheet.substring(0, 31)); 
-
-                const timestamp = new Date().toISOString().split('T')[0];
-                const fileName = `${currentSheet.replace(/\s+/g, '_')}_Registry_${timestamp}.xlsx`;
-
-                XLSX.writeFile(workbook, fileName);
-                showToast("Excel generated (Format check complete)", "bg-emerald-600");
-            } catch (err) {
-                console.error(err);
-                showToast("Export failed", "bg-rose-600");
+            if (match) {
+                indicator.textContent = "TID MATCH FOUND";
+                indicator.style.opacity = '1';
+                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-blue-500/20 text-blue-400";
+                dbaIndicator.textContent = match[dbaIdx] ? String(match[dbaIdx]).trim() : "NO DBA NAME";
+                dbaIndicator.style.opacity = '1';
+                if (rByIdx !== -1 && match[rByIdx]) { fields.rby.placeholder = String(match[rByIdx]); fields.rby.classList.add('found-shadow'); }
+                if (rDateIdx !== -1 && match[rDateIdx] && match[rDateIdx] !== '-') { fields.rdate.placeholder = formatDateReadable(match[rDateIdx]); fields.rdate.classList.add('found-shadow'); }
+                if (verIdx !== -1 && match[verIdx]) { fields.ver.placeholder = String(match[verIdx]); fields.ver.classList.add('found-shadow'); }
+                if (remIdx !== -1 && match[remIdx]) { fields.rem.placeholder = String(match[remIdx]); fields.rem.classList.add('found-shadow'); }
+            } else {
+                indicator.style.opacity = '1';
+                indicator.textContent = "TID NOT FOUND";
+                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-rose-500/10 text-rose-500";
+                dbaIndicator.style.opacity = '0';
+                Object.values(fields).forEach(el => { el.placeholder = el.id === 'u-rdate' ? 'DD-MM-YYYY' : '...'; el.classList.remove('found-shadow'); });
             }
         }
 
+        function showWarning(tid, date) {
+            const modal = document.getElementById('warning-modal');
+            const msg = document.getElementById('warning-msg');
+            msg.innerHTML = `TID <b>${tid}</b> already has a recorded submission for <b>${date}</b>. <br><br>Duplicate entries via this portal are restricted to prevent data corruption.`;
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('modal-active'), 10);
+        }
+
+        function closeWarning() {
+            const modal = document.getElementById('warning-modal');
+            modal.classList.remove('modal-active');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
         function submitUpdate() {
+            const targetSheet = document.getElementById('u-sheet').value;
             const tid = document.getElementById('u-tid').value.trim();
-            if(!tid) return showToast("TID is required", "bg-rose-600");
+            const psn = document.getElementById('u-psn').value.trim();
+            const rollDate = document.getElementById('u-rdate').value;
+
+            if(!tid || !psn || !rollDate) return showToast("Required: TID, PSN, and DATE", "bg-rose-600");
+
+            // DUPLICATE CHECK LOGIC
+            const headers = sheetHeaders[targetSheet] || [];
+            const dataRows = allSheetsData[targetSheet] || [];
+            const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
+            const dateIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT DATE');
+            const psnIdx = headers.findIndex(h => h?.toUpperCase() === 'POS S/N');
+
+            const normalizedDate = new Date(rollDate).toDateString();
+            
+            // Check if ANY entry in local cache matches both TID and DATE
+            const duplicate = dataRows.find(row => {
+                const rowTid = String(row[tidIdx]).trim();
+                const rowDateRaw = row[dateIdx];
+                if (!rowDateRaw || rowDateRaw === '-') return false;
+                const rowDate = new Date(rowDateRaw).toDateString();
+                return rowTid === tid && rowDate === normalizedDate;
+            });
+
+            if (duplicate) {
+                return showWarning(tid, formatDateReadable(rollDate));
+            }
+
+            const matchingRow = dataRows.find(row => String(row[tidIdx]).trim() === tid);
+            if (!matchingRow) return showToast(`TID ${tid} not found`, "bg-rose-600");
+            if (String(matchingRow[psnIdx]).trim() !== psn) return showToast(`POS S/N mismatch`, "bg-rose-600");
 
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
             btn.textContent = "Syncing...";
 
-            const targetSheet = document.getElementById('u-sheet').value;
             const callbackName = 'upd_' + Date.now();
-            
             const params = {
                 action: 'updateDeployment',
                 sheetName: targetSheet,
                 tid: tid,
                 rollBy: document.getElementById('u-rby').value.trim(),
-                rollDate: document.getElementById('u-rdate').value,
+                rollDate: rollDate,
                 version: document.getElementById('u-ver').value.trim(),
                 remarks: document.getElementById('u-rem').value.trim(),
                 callback: callbackName
             };
 
-            const queryString = Object.keys(params)
-                .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
-                .join('&');
-
+            const queryString = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
             window[callbackName] = (res) => {
-                if(res && res.success) {
-                    showToast(`Updated: ${tid} - Sheet Refreshed`, "bg-emerald-600");
-                    // Auto-refresh data from Google Sheets after update
+                if(res?.success) {
+                    showToast(`Updated: ${tid}`, "bg-emerald-600");
                     fetchSheetData(); 
-                    ['u-tid', 'u-rby', 'u-rdate', 'u-ver', 'u-rem'].forEach(id => document.getElementById(id).value = '');
+                    ['u-tid', 'u-psn', 'u-rby', 'u-rdate', 'u-ver', 'u-rem'].forEach(id => {
+                        const el = document.getElementById(id);
+                        el.value = '';
+                        if(id === 'u-rdate') el.type = 'text';
+                    });
+                    handleTIDLookup(); 
                 } else {
                     showToast(res?.message || "Update Failed", "bg-rose-600");
                 }
