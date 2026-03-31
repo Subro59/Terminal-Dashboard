@@ -9,9 +9,29 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; margin: 0; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 1rem; }
-        .table-container { scrollbar-width: thin; scrollbar-color: #475569 #1e293b; max-height: 60vh; overflow: auto; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; 
+            color: #f1f5f9; 
+            margin: 0; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 1rem; 
+        }
+
+        .table-container { 
+            scrollbar-width: thin; 
+            scrollbar-color: #475569 #1e293b; 
+            max-height: 60vh; 
+            overflow: auto; 
+        }
+
         .table-container::-webkit-scrollbar { width: 6px; height: 6px; }
         .table-container::-webkit-scrollbar-track { background: #1e293b; }
         .table-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
@@ -20,7 +40,13 @@
         .clock-font { font-family: 'JetBrains Mono', monospace; }
         
         .sticky-col { position: sticky; left: 0; z-index: 10; background: #1e293b; }
-        
+
+        table { border-collapse: collapse; table-layout: auto; width: 100%; }
+        td { 
+            vertical-align: middle; 
+            white-space: nowrap; /* Prevent wrapping */
+        }
+
         .page-btn { background: #1e293b; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; font-size: 0.75rem; }
         .page-btn:hover:not(:disabled) { background: #334155; border-color: #475569; }
         .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -32,31 +58,42 @@
 
         input::placeholder { transition: color 0.3s ease; }
         .found-shadow::placeholder { color: #94a3b8 !important; opacity: 1; font-style: italic; }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            z-index: 10;
+            position: relative;
+        }
 
-        /* Modal styling */
         #warning-modal { transition: all 0.3s ease; }
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-active { opacity: 1; transform: scale(1); }
+        .modal-active { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; }
+        
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        .input-success { border-color: #10b981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+
+        .sync-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-4 md:p-6">
 
     <!-- Duplicate Warning Modal -->
-    <div id="warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden">
-        <div class="glass-card max-w-md w-full p-6 border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.2)]">
+    <div id="warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden opacity-0 scale-95 pointer-events-none">
+        <div class="glass-card max-w-md w-full p-6 border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.2)] mx-4">
             <div class="flex flex-col items-center text-center space-y-4">
                 <div class="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-2">
                     <i class="fas fa-exclamation-triangle text-3xl text-rose-500 animate-pulse"></i>
                 </div>
-                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Duplicate Entry Detected</h2>
+                <h2 class="text-xl font-black text-white uppercase tracking-tighter">Duplicate Entry Blocked</h2>
                 <p id="warning-msg" class="text-slate-400 text-sm leading-relaxed">
-                    This TID has already been submitted for the selected date. Duplicate automated submissions are blocked.
+                    This TID already has a submission for today with the same App Version.
                 </p>
                 <div class="bg-slate-900 p-4 rounded-lg w-full border border-slate-800">
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Resolution Instruction</p>
-                    <p class="text-xs text-blue-400 font-medium italic">Please enter this data manually into the Google Sheet if a double deployment is required.</p>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">How to proceed?</p>
+                    <p class="text-xs text-blue-400 font-medium italic">If this is a new version update, change the "App. Version" field. Otherwise, please enter manually in the sheet.</p>
                 </div>
-                <button onclick="closeWarning()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-xl transition-all uppercase text-xs tracking-widest active:scale-95 shadow-lg">Acknowledged</button>
+                <button onclick="closeWarning()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-4 rounded-xl transition-all uppercase text-xs tracking-widest active:scale-95 shadow-lg">OK, Understood</button>
             </div>
         </div>
     </div>
@@ -65,14 +102,14 @@
         <!-- Header -->
         <header class="flex flex-row justify-between items-start border-b border-slate-800 pb-4">
             <div>
-                <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Terminal Registry</h1>
+                <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Terminal Dashboard</h1>
                 <div class="flex items-center gap-4 mt-1">
                     <p id="status-text" class="text-slate-400 text-[9px] font-bold uppercase flex items-center gap-2">
                         <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
                         <span id="status-label">Initializing</span>
                     </p>
                     <button onclick="fetchSheetData()" class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white px-2 py-1 rounded flex items-center gap-2 transition-all active:scale-95 text-[9px] font-bold border border-blue-500/20">
-                        <i class="fas fa-sync-alt" id="sync-icon"></i> REFRESH
+                        <i class="fas fa-sync-alt" id="sync-icon"></i> Sync
                     </button>
                 </div>
             </div>
@@ -96,22 +133,19 @@
                          <span id="page-info" class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Page 1 of 1</span>
                     </div>
                     <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <button onclick="copyCurrentSearch()" class="bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white h-9 px-3 rounded-lg border border-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] font-bold">
-                            <i class="fas fa-copy"></i><span class="hidden sm:inline">COPY DETAILS</span>
-                        </button>
-                        <button onclick="downloadFilteredData()" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white h-9 px-3 rounded-lg border border-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 text-[10px] font-bold">
-                            <i class="fas fa-file-excel"></i><span class="hidden sm:inline">EXPORT EXCEL</span>
-                        </button>
                         <div class="relative w-full sm:w-72">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                            <input type="text" id="tableSearch" onkeyup="handleSearch()" placeholder="Search registry..." class="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-[11px] w-full focus:border-blue-500 outline-none">
+                            <input type="text" id="tableSearch" onkeyup="handleSearch()" placeholder="Search (comma separated for multi)..." class="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-[11px] w-full focus:border-blue-500 outline-none">
                         </div>
+                        <button onclick="downloadTableData()" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 whitespace-nowrap">
+                            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Export XLSX</span>
+                        </button>
                     </div>
                 </div>
             </div>
             
             <div class="table-container">
-                <table class="w-full text-left text-[11px] border-collapse min-w-[3000px]" id="terminalTable">
+                <table class="w-full text-left text-[11px] border-collapse min-w-[1500px]" id="terminalTable">
                     <thead class="sticky top-0 bg-slate-800 z-20" id="terminalTableHeader"></thead>
                     <tbody id="terminalTableBody" class="divide-y divide-slate-800/50">
                         <tr><td colspan="30" class="p-10 text-center text-slate-500 italic">Connecting to API...</td></tr>
@@ -158,8 +192,11 @@
                     <input type="text" id="u-rby" placeholder="Name" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[9px] text-slate-500 font-bold uppercase">Roll-out Date</label>
-                    <input type="text" id="u-rdate" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" placeholder="DD-MM-YYYY" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-400">
+                    <label class="text-[9px] text-slate-500 font-bold uppercase flex flex-wrap gap-1">
+                        <span>Roll-out Date *</span>
+                        <span id="u-rdate-shadow" class="text-blue-400 italic lowercase font-normal opacity-0 transition-opacity"></span>
+                    </label>
+                    <input type="date" id="u-rdate" required class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none text-slate-200">
                 </div>
                 <div class="space-y-1">
                     <label class="text-[9px] text-slate-500 font-bold uppercase">App. Version</label>
@@ -170,16 +207,17 @@
                     <input type="text" id="u-rem" placeholder="Add remarks..." class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-xs focus:border-blue-500 outline-none">
                 </div>
                 <div class="flex items-end">
-                    <button id="btn-submit" onclick="submitUpdate()" class="w-full bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded font-bold text-[10px] uppercase transition-all shadow-lg text-white">Update</button>
+                    <button id="btn-submit" onclick="submitUpdate()" class="w-full bg-blue-600 hover:bg-blue-500 px-4 py-3 sm:py-1.5 rounded font-bold text-[10px] uppercase transition-all shadow-lg text-white">Update</button>
                 </div>
             </div>
         </section>
     </div>
 
+    <!-- Toast Notifications -->
     <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 opacity-0 pointer-events-none z-50 shadow-2xl"></div>
 
     <script>
-        const BASE_API_URL = `https://script.google.com/macros/s/AKfycbyji-qyPj6khVZ9O5y24zdcagTbLQD4A9WeKz6aBFj_Pw7Bv16Gky13CdZw_rmUNwUn9A/exec`;
+        const BASE_API_URL = `https://script.google.com/macros/s/AKfycbxXey0-5WIJqn0u9h5Fpju5MrDdHuXPl1nc8TSZgbtjeLjzBkVD9vV6XJ6qsY7dzo4PrA/exec`;
 
         let allSheetsData = {};
         let sheetHeaders = {};
@@ -187,6 +225,8 @@
         let filteredData = [];
         let currentPage = 1;
         const pageSize = 50; 
+
+        const cleanStr = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().trim();
 
         function updateClock() {
             const now = new Date();
@@ -200,11 +240,12 @@
 
         function setStatus(msg, colorClass) {
             document.getElementById('status-label').textContent = msg;
-            document.getElementById('status-dot').className = `w-2 h-2 rounded-full ${colorClass}`;
+            const dot = document.getElementById('status-dot');
+            if (dot) dot.className = `w-2 h-2 rounded-full ${colorClass}`;
         }
 
         function formatDateReadable(dateStr) {
-            if (!dateStr || dateStr === '-' || dateStr === 'null' || dateStr === 'undefined') return '-';
+            if (!dateStr || dateStr === '-' || dateStr === 'null' || dateStr === 'undefined') return '';
             try {
                 const date = new Date(dateStr);
                 if (isNaN(date.getTime())) return dateStr;
@@ -217,13 +258,19 @@
         function fetchSheetData() {
             setStatus('Syncing...', 'bg-blue-500 animate-pulse');
             const syncIcon = document.getElementById('sync-icon');
-            if (syncIcon) syncIcon.classList.add('fa-spin');
+            if (syncIcon) syncIcon.classList.add('sync-spin');
             
-            const callback = 'cb_' + Date.now();
+            const callback = 'cb_' + Math.floor(Math.random() * 1000000);
             window[callback] = (res) => {
-                if (!res) return setStatus('Error', 'bg-rose-500');
+                if (!res) {
+                    setStatus('Error', 'bg-rose-500');
+                    if (syncIcon) syncIcon.classList.remove('sync-spin');
+                    return;
+                }
+                
                 allSheetsData = {};
                 sheetHeaders = {};
+                
                 Object.keys(res).forEach(sheetName => {
                     const rows = res[sheetName];
                     if (Array.isArray(rows) && rows.length > 0) {
@@ -231,6 +278,7 @@
                         allSheetsData[sheetName] = rows.slice(1);
                     }
                 });
+
                 const sheetNames = Object.keys(allSheetsData);
                 if (sheetNames.length > 0) {
                     setStatus('Connected', 'bg-emerald-500');
@@ -238,11 +286,16 @@
                     renderDynamicUI(sheetNames);
                     switchSheet(currentSheet);
                 }
-                if (syncIcon) syncIcon.classList.remove('fa-spin');
+                
+                if (syncIcon) syncIcon.classList.remove('sync-spin');
+                const script = document.getElementById('jsonp-' + callback);
+                if(script) script.remove();
                 delete window[callback];
             };
+
             const script = document.createElement('script');
-            script.src = `${BASE_API_URL}?action=fetchData&callback=${callback}&_t=${Date.now()}`; 
+            script.id = 'jsonp-' + callback;
+            script.src = `${BASE_API_URL}?action=fetchData&callback=${callback}&_t=${Date.now()}`;
             document.body.appendChild(script);
         }
 
@@ -298,6 +351,7 @@
 
             const isPBL = currentSheet.toUpperCase().includes('PBL');
             const hideForPBL = ['REMARKS', 'CONFIGURE BY'];
+            
             const visibleIndices = headers.map((h, idx) => {
                 if (isPBL && hideForPBL.includes((h || '').toUpperCase())) return null;
                 return idx;
@@ -307,7 +361,7 @@
             visibleIndices.forEach(idx => {
                 const label = headers[idx] || `Col ${idx + 1}`;
                 const lower = label.toLowerCase();
-                let extraClass = "p-2 bg-slate-800";
+                let extraClass = "p-3 bg-slate-800 text-[10px]";
                 if (lower.includes('tid') || lower === 'id') extraClass += " sticky-col text-blue-400";
                 headerHtml += `<th class="${extraClass}">${label}</th>`;
             });
@@ -323,15 +377,17 @@
                 visibleIndices.forEach(idx => {
                     let val = row[idx] ?? '-';
                     const label = (headers[idx] || '').toUpperCase();
-                    let cellClass = "p-2";
+                    let cellClass = "p-3";
                     let content = val;
                     if (label === 'TID') cellClass += " font-black text-blue-400 sticky-col";
-                    if (label.includes('DATE')) content = formatDateReadable(val);
+                    if (label.includes('DATE')) content = formatDateReadable(val) || '-';
+                    
                     bodyHtml += `<td class="${cellClass}">${content}</td>`;
                 });
                 bodyHtml += `</tr>`;
             });
-            tbody.innerHTML = bodyHtml || '<tr><td class="p-10 text-center">No matching records.</td></tr>';
+            tbody.innerHTML = bodyHtml || '<tr><td colspan="30" class="p-10 text-center">No matching records.</td></tr>';
+            
             document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
             document.getElementById('result-count').textContent = `${filteredData.length} Results`;
             document.getElementById('prev-btn').disabled = currentPage === 1;
@@ -341,7 +397,20 @@
         function handleSearch() {
             const query = document.getElementById('tableSearch').value.toLowerCase().trim();
             const baseData = allSheetsData[currentSheet] || [];
-            filteredData = query ? baseData.filter(r => r.some(c => String(c).toLowerCase().includes(query))) : [...baseData];
+            
+            if (!query) {
+                filteredData = [...baseData];
+            } else {
+                const terms = query.split(',').map(term => term.trim()).filter(term => term !== "");
+                filteredData = baseData.filter(row => {
+                    return terms.some(term => {
+                        return row.some(cellValue => 
+                            String(cellValue || '').toLowerCase().includes(term)
+                        );
+                    });
+                });
+            }
+            
             currentPage = 1; 
             renderTable();
         }
@@ -352,11 +421,43 @@
             document.querySelector('.table-container').scrollTop = 0;
         }
 
+        function downloadTableData() {
+            if (!filteredData || filteredData.length === 0) {
+                return showToast("No results to export", "bg-rose-600");
+            }
+
+            const headers = sheetHeaders[currentSheet] || [];
+            const remarksIdx = headers.findIndex(h => (h || '').toUpperCase().includes('REMARKS'));
+            const endIdx = remarksIdx !== -1 ? remarksIdx + 1 : headers.length;
+
+            const exportHeaders = headers.slice(0, endIdx);
+            const exportRows = [exportHeaders];
+
+            filteredData.forEach(row => {
+                const formattedRow = row.slice(0, endIdx).map((val, idx) => {
+                    const label = (headers[idx] || '').toUpperCase();
+                    if (label.includes('DATE')) return formatDateReadable(val);
+                    return val;
+                });
+                exportRows.push(formattedRow);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(exportRows);
+            XLSX.utils.book_append_sheet(wb, ws, "Search Results");
+
+            const fileName = `${currentSheet.replace(' LIVE', '')}_Results_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            showToast("Excel Downloaded", "bg-emerald-600");
+        }
+
         function handleTIDLookup() {
             const tidInput = document.getElementById('u-tid').value.trim();
             const targetSheet = document.getElementById('u-sheet').value;
             const indicator = document.getElementById('lookup-indicator');
             const dbaIndicator = document.getElementById('dba-indicator');
+            const psnInput = document.getElementById('u-psn');
+            const dateShadowLabel = document.getElementById('u-rdate-shadow');
             const fields = {
                 rby: document.getElementById('u-rby'),
                 rdate: document.getElementById('u-rdate'),
@@ -364,10 +465,14 @@
                 rem: document.getElementById('u-rem')
             };
 
+            psnInput.classList.remove('input-success');
+            dateShadowLabel.textContent = ''; 
+            dateShadowLabel.classList.add('opacity-0');
+
             if (!tidInput || !targetSheet) {
                 indicator.style.opacity = '0';
                 dbaIndicator.style.opacity = '0';
-                Object.values(fields).forEach(el => { el.placeholder = el.id === 'u-rdate' ? 'DD-MM-YYYY' : '...'; el.classList.remove('found-shadow'); });
+                Object.values(fields).forEach(el => el.classList.remove('found-shadow'));
                 return;
             }
 
@@ -380,7 +485,7 @@
             const verIdx = headers.findIndex(h => h?.toUpperCase() === 'APP. VERSION');
             const remIdx = headers.findIndex(h => h?.toUpperCase() === 'ENG. REMARKS');
 
-            const match = dataRows.find(row => String(row[tidIdx]).trim() === tidInput);
+            const match = dataRows.find(row => cleanStr(row[tidIdx]) === cleanStr(tidInput));
 
             if (match) {
                 indicator.textContent = "TID MATCH FOUND";
@@ -388,23 +493,34 @@
                 indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-blue-500/20 text-blue-400";
                 dbaIndicator.textContent = match[dbaIdx] ? String(match[dbaIdx]).trim() : "NO DBA NAME";
                 dbaIndicator.style.opacity = '1';
+                
                 if (rByIdx !== -1 && match[rByIdx]) { fields.rby.placeholder = String(match[rByIdx]); fields.rby.classList.add('found-shadow'); }
-                if (rDateIdx !== -1 && match[rDateIdx] && match[rDateIdx] !== '-') { fields.rdate.placeholder = formatDateReadable(match[rDateIdx]); fields.rdate.classList.add('found-shadow'); }
                 if (verIdx !== -1 && match[verIdx]) { fields.ver.placeholder = String(match[verIdx]); fields.ver.classList.add('found-shadow'); }
                 if (remIdx !== -1 && match[remIdx]) { fields.rem.placeholder = String(match[remIdx]); fields.rem.classList.add('found-shadow'); }
+                
+                if (rDateIdx !== -1 && match[rDateIdx] && match[rDateIdx] !== '-' && match[rDateIdx] !== '') { 
+                    const shadowText = formatDateReadable(match[rDateIdx]);
+                    if (shadowText && shadowText !== '-') {
+                        dateShadowLabel.textContent = `(${shadowText})`;
+                        dateShadowLabel.classList.remove('opacity-0');
+                    }
+                }
             } else {
                 indicator.style.opacity = '1';
                 indicator.textContent = "TID NOT FOUND";
                 indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-rose-500/10 text-rose-500";
                 dbaIndicator.style.opacity = '0';
-                Object.values(fields).forEach(el => { el.placeholder = el.id === 'u-rdate' ? 'DD-MM-YYYY' : '...'; el.classList.remove('found-shadow'); });
+                Object.values(fields).forEach(el => {
+                    el.classList.remove('found-shadow');
+                    if (el.id !== 'u-rdate') el.placeholder = el.id === 'u-ver' ? 'v1.0.0' : el.id === 'u-rem' ? 'Add remarks...' : 'Name';
+                });
             }
         }
 
-        function showWarning(tid, date) {
+        function showWarning(tid, date, version) {
             const modal = document.getElementById('warning-modal');
             const msg = document.getElementById('warning-msg');
-            msg.innerHTML = `TID <b>${tid}</b> already has a recorded submission for <b>${date}</b>. <br><br>Duplicate entries via this portal are restricted to prevent data corruption.`;
+            msg.innerHTML = `TID <b>${tid}</b> already has a recorded submission for <b>${date}</b> with App Version <b>${version}</b>. <br><br>Submissions are blocked unless you are updating to a newer version.`;
             modal.classList.remove('hidden');
             setTimeout(() => modal.classList.add('modal-active'), 10);
         }
@@ -418,49 +534,62 @@
         function submitUpdate() {
             const targetSheet = document.getElementById('u-sheet').value;
             const tid = document.getElementById('u-tid').value.trim();
-            const psn = document.getElementById('u-psn').value.trim();
+            const inputPsnRaw = document.getElementById('u-psn').value.trim();
             const rollDate = document.getElementById('u-rdate').value;
+            const inputVer = document.getElementById('u-ver').value.trim();
 
-            if(!tid || !psn || !rollDate) return showToast("Required: TID, PSN, and DATE", "bg-rose-600");
+            if(!tid || !inputPsnRaw || !rollDate) {
+                return showToast("Required: TID, PSN, and DATE", "bg-rose-600");
+            }
 
-            // DUPLICATE CHECK LOGIC
             const headers = sheetHeaders[targetSheet] || [];
             const dataRows = allSheetsData[targetSheet] || [];
             const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
-            const dateIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT DATE');
             const psnIdx = headers.findIndex(h => h?.toUpperCase() === 'POS S/N');
+            const dateIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT DATE');
+            const verIdx = headers.findIndex(h => h?.toUpperCase() === 'APP. VERSION');
+
+            const matchingRow = dataRows.find(row => cleanStr(row[tidIdx]) === cleanStr(tid));
+            if (!matchingRow) return showToast(`TID ${tid} not found`, "bg-rose-600");
+
+            const sheetPsnClean = cleanStr(matchingRow[psnIdx]);
+            const inputPsnClean = cleanStr(inputPsnRaw);
+
+            if (sheetPsnClean !== inputPsnClean) {
+                document.getElementById('u-psn').focus();
+                return showToast(`S/N Mismatch! Check Sheet: ${matchingRow[psnIdx]}`, "bg-rose-600");
+            }
+
+            document.getElementById('u-psn').classList.add('input-success');
 
             const normalizedDate = new Date(rollDate).toDateString();
-            
-            // Check if ANY entry in local cache matches both TID and DATE
-            const duplicate = dataRows.find(row => {
-                const rowTid = String(row[tidIdx]).trim();
+            const existingEntry = dataRows.find(row => {
+                const rowTid = cleanStr(row[tidIdx]);
                 const rowDateRaw = row[dateIdx];
                 if (!rowDateRaw || rowDateRaw === '-') return false;
                 const rowDate = new Date(rowDateRaw).toDateString();
-                return rowTid === tid && rowDate === normalizedDate;
+                return rowTid === cleanStr(tid) && rowDate === normalizedDate;
             });
 
-            if (duplicate) {
-                return showWarning(tid, formatDateReadable(rollDate));
+            if (existingEntry) {
+                const existingVer = String(existingEntry[verIdx] || '').trim();
+                if (existingVer === inputVer || !inputVer) {
+                    return showWarning(tid, formatDateReadable(rollDate), existingVer || 'None');
+                }
             }
-
-            const matchingRow = dataRows.find(row => String(row[tidIdx]).trim() === tid);
-            if (!matchingRow) return showToast(`TID ${tid} not found`, "bg-rose-600");
-            if (String(matchingRow[psnIdx]).trim() !== psn) return showToast(`POS S/N mismatch`, "bg-rose-600");
 
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
             btn.textContent = "Syncing...";
 
-            const callbackName = 'upd_' + Date.now();
+            const callbackName = 'upd_' + Math.floor(Math.random() * 1000000);
             const params = {
                 action: 'updateDeployment',
                 sheetName: targetSheet,
                 tid: tid,
                 rollBy: document.getElementById('u-rby').value.trim(),
                 rollDate: rollDate,
-                version: document.getElementById('u-ver').value.trim(),
+                version: inputVer,
                 remarks: document.getElementById('u-rem').value.trim(),
                 callback: callbackName
             };
@@ -473,7 +602,7 @@
                     ['u-tid', 'u-psn', 'u-rby', 'u-rdate', 'u-ver', 'u-rem'].forEach(id => {
                         const el = document.getElementById(id);
                         el.value = '';
-                        if(id === 'u-rdate') el.type = 'text';
+                        el.classList.remove('input-success');
                     });
                     handleTIDLookup(); 
                 } else {
@@ -481,10 +610,14 @@
                 }
                 btn.disabled = false;
                 btn.textContent = "Update";
+                
+                const script = document.getElementById('jsonp-' + callbackName);
+                if(script) script.remove();
                 delete window[callbackName];
             };
 
             const script = document.createElement('script');
+            script.id = 'jsonp-' + callbackName;
             script.src = `${BASE_API_URL}?${queryString}`;
             document.body.appendChild(script);
         }
@@ -494,7 +627,11 @@
             t.textContent = msg;
             t.className = `fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 z-50 shadow-2xl ${color}`;
             t.style.opacity = '1';
-            setTimeout(() => t.style.opacity = '0', 4000);
+            t.style.pointerEvents = 'auto';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.pointerEvents = 'none';
+            }, 5000);
         }
 
         window.onload = fetchSheetData;
