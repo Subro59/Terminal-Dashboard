@@ -44,7 +44,7 @@
         table { border-collapse: collapse; table-layout: auto; width: 100%; }
         td { 
             vertical-align: middle; 
-            white-space: nowrap; /* Prevent wrapping */
+            white-space: nowrap; 
         }
 
         .page-btn { background: #1e293b; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; font-size: 0.75rem; }
@@ -55,6 +55,58 @@
         .tab-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
         .tab-btn:not(.active) { color: #64748b; background: #1e293b; border-color: #334155; }
         .tab-btn:not(.active):hover { background: #334155; color: #cbd5e1; }
+
+        /* Expandable Search Styles */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 40px;
+        }
+        .search-wrapper.expanded {
+            width: 280px;
+        }
+        .search-input {
+            width: 0;
+            opacity: 0;
+            padding: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .search-wrapper.expanded .search-input {
+            width: 100%;
+            opacity: 1;
+            padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+            pointer-events: auto;
+        }
+        .search-icon-btn {
+            position: absolute;
+            left: 0;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            color: #94a3b8;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        .search-icon-btn:hover {
+            border-color: #475569;
+            background: #334155;
+            color: #f1f5f9;
+        }
+        .search-wrapper.expanded .search-icon-btn {
+            color: #3b82f6;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
 
         input::placeholder { transition: color 0.3s ease; }
         .found-shadow::placeholder { color: #94a3b8 !important; opacity: 1; font-style: italic; }
@@ -132,11 +184,20 @@
                          <span id="result-count" class="text-[9px] bg-slate-800 text-blue-400 px-2 py-1 rounded font-bold">0 Results</span>
                          <span id="page-info" class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Page 1 of 1</span>
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <div class="relative w-full sm:w-72">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-                            <input type="text" id="tableSearch" onkeyup="handleSearch()" placeholder="Search (comma separated for multi)..." class="bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-[11px] w-full focus:border-blue-500 outline-none">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <!-- Expandable Search Bar -->
+                        <div id="searchWrapper" class="search-wrapper">
+                            <div class="search-icon-btn" onclick="toggleSearch()" title="Toggle Search">
+                                <i class="fas fa-search text-xs"></i>
+                            </div>
+                            <input type="text" 
+                                   id="tableSearch" 
+                                   onkeyup="handleSearch()" 
+                                   onblur="collapseSearch()"
+                                   placeholder="Search term..." 
+                                   class="search-input bg-slate-900 border border-slate-700 rounded-lg text-[11px] focus:border-blue-500 outline-none">
                         </div>
+
                         <button onclick="downloadTableData()" class="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20 whitespace-nowrap">
                             <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Export XLSX</span>
                         </button>
@@ -227,6 +288,24 @@
         const pageSize = 50; 
 
         const cleanStr = (val) => String(val || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().trim();
+
+        // Search UI Interaction
+        function toggleSearch() {
+            const wrapper = document.getElementById('searchWrapper');
+            const input = document.getElementById('tableSearch');
+            wrapper.classList.toggle('expanded');
+            if (wrapper.classList.contains('expanded')) {
+                input.focus();
+            }
+        }
+
+        function collapseSearch() {
+            const wrapper = document.getElementById('searchWrapper');
+            const input = document.getElementById('tableSearch');
+            if (input.value.trim() === '') {
+                wrapper.classList.remove('expanded');
+            }
+        }
 
         function updateClock() {
             const now = new Date();
