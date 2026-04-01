@@ -37,15 +37,50 @@
         .table-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
         
         tr:hover td { background-color: rgba(51, 65, 85, 0.5); }
+        tr:hover td.sticky-col-copy { background-color: #1e293b !important; }
+        tr:hover td.sticky-col-tid { background-color: #1e293b !important; }
+
         .clock-font { font-family: 'JetBrains Mono', monospace; }
         
-        .sticky-col { position: sticky; left: 0; z-index: 10; background: #1e293b; }
-
-        table { border-collapse: collapse; table-layout: auto; width: 100%; }
-        td { 
-            vertical-align: middle; 
-            white-space: nowrap; 
+        /* Two-Line Header Constraint */
+        .header-wrap-2-lines {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.2;
+            height: 2.4em; /* Exactly 2 lines height */
+            min-width: 80px; /* Ensure enough width for wrapping */
         }
+
+        /* SOLID BACKGROUND STICKY COLUMNS */
+        .sticky-col-copy { 
+            position: sticky; 
+            left: 0; 
+            z-index: 30; 
+            background-color: #1e293b !important; 
+            border-right: 1px solid rgba(255,255,255,0.1);
+            width: 50px;
+            min-width: 50px;
+        }
+        .sticky-col-tid { 
+            position: sticky; 
+            left: 50px; 
+            z-index: 30; 
+            background-color: #1e293b !important; 
+            border-right: 1px solid rgba(255,255,255,0.1);
+            min-width: 100px;
+        }
+
+        thead th.sticky-col-copy, thead th.sticky-col-tid {
+            z-index: 40; 
+            background-color: #1e293b !important;
+        }
+
+        table { border-collapse: separate; border-spacing: 0; width: 100%; }
+        td { vertical-align: middle; white-space: nowrap; }
 
         .page-btn { background: #1e293b; border: 1px solid #334155; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; font-size: 0.75rem; }
         .page-btn:hover:not(:disabled) { background: #334155; border-color: #475569; }
@@ -55,7 +90,6 @@
         .tab-btn.active { background: #3b82f6; color: white; border-color: #60a5fa; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
         .tab-btn:not(.active) { color: #64748b; background: #1e293b; border-color: #334155; }
 
-        /* Mobile Optimized Expandable Search */
         .search-wrapper {
             position: relative;
             display: flex;
@@ -66,79 +100,34 @@
             flex-shrink: 0;
         }
         
-        .search-wrapper.expanded {
-            width: 100%;
-            max-width: 300px;
-        }
-
-        @media (max-width: 640px) {
-            .search-wrapper.expanded {
-                max-width: calc(100vw - 120px);
-            }
-        }
-
+        .search-wrapper.expanded { width: 100%; max-width: 300px; }
         .search-input {
-            width: 0;
-            opacity: 0;
-            padding: 0;
-            pointer-events: none;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            height: 38px;
+            width: 0; opacity: 0; padding: 0; pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 38px;
         }
-
         .search-wrapper.expanded .search-input {
-            width: 100%;
-            opacity: 1;
-            padding: 0.5rem 0.75rem 0.5rem 2.75rem;
-            pointer-events: auto;
+            width: 100%; opacity: 1; padding: 0.5rem 0.75rem 0.5rem 2.75rem; pointer-events: auto;
         }
-
         .search-icon-btn {
-            position: absolute;
-            left: 0;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-            color: #94a3b8;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 0.5rem;
-            transition: all 0.3s;
+            position: absolute; left: 0; width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10; color: #94a3b8; background: #1e293b;
+            border: 1px solid #334155; border-radius: 0.5rem; transition: all 0.3s;
         }
 
-        .search-wrapper.expanded .search-icon-btn {
-            color: #3b82f6;
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
+        .copy-row-btn {
+            color: #94a3b8; transition: all 0.2s; padding: 4px; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; width: 100%;
         }
-
-        input::placeholder { transition: color 0.3s ease; }
-        .found-shadow::placeholder { color: #94a3b8 !important; opacity: 1; font-style: italic; }
+        .copy-row-btn:hover { color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-            z-index: 10;
-            position: relative;
-        }
-
-        #warning-modal { transition: all 0.3s ease; }
-        .modal-active { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; }
-        
-        button:active { transform: scale(0.95); opacity: 0.8; }
-        .input-success { border-color: #10b981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
-
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         .sync-spin { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="p-3 md:p-6">
 
-    <!-- Duplicate Warning Modal -->
     <div id="warning-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm hidden opacity-0 scale-95 pointer-events-none">
         <div class="glass-card max-w-md w-full p-6 border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.2)] mx-4 text-center">
             <div class="flex flex-col items-center space-y-4">
@@ -153,7 +142,6 @@
     </div>
 
     <div class="max-w-full mx-auto space-y-4">
-        <!-- Header -->
         <header class="flex flex-row justify-between items-start border-b border-slate-800 pb-4">
             <div class="pr-2">
                 <h1 class="text-xl md:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">Terminal Dashboard</h1>
@@ -174,12 +162,9 @@
             </div>
         </header>
 
-        <!-- Stats Grid -->
         <section id="stats-grid" class="flex overflow-x-auto gap-2 pb-2 no-scrollbar scroll-smooth"></section>
 
-        <!-- Main Registry Section -->
         <section class="glass-card overflow-hidden flex flex-col shadow-2xl">
-            <!-- Tabs/Controls Header -->
             <div class="p-3 border-b border-slate-700/50 bg-slate-800/20 flex flex-col gap-3">
                 <div id="tabs-container" class="flex overflow-x-auto gap-1.5 no-scrollbar pb-1"></div>
                 
@@ -190,17 +175,11 @@
                     </div>
 
                     <div class="flex items-center gap-2 flex-grow justify-end">
-                        <!-- Responsive Expandable Search -->
                         <div id="searchWrapper" class="search-wrapper">
                             <div class="search-icon-btn" onclick="toggleSearch()">
                                 <i class="fas fa-search text-xs"></i>
                             </div>
-                            <input type="text" 
-                                   id="tableSearch" 
-                                   onkeyup="handleSearch()" 
-                                   onblur="collapseSearch()"
-                                   placeholder="Search..." 
-                                   class="search-input bg-slate-900 border border-slate-700 rounded-lg text-[11px] focus:border-blue-500 outline-none text-slate-200">
+                            <input type="text" id="tableSearch" onkeyup="handleSearch()" onblur="collapseSearch()" placeholder="Search..." class="search-input bg-slate-900 border border-slate-700 rounded-lg text-[11px] focus:border-blue-500 outline-none text-slate-200">
                         </div>
 
                         <button onclick="downloadTableData()" class="h-[38px] bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-all text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 flex-shrink-0">
@@ -211,8 +190,8 @@
             </div>
             
             <div class="table-container">
-                <table class="w-full text-left text-[11px] border-collapse min-w-[1200px]" id="terminalTable">
-                    <thead class="sticky top-0 bg-slate-800 z-20" id="terminalTableHeader"></thead>
+                <table class="w-full text-left text-[11px]" id="terminalTable">
+                    <thead class="sticky top-0 z-40" id="terminalTableHeader"></thead>
                     <tbody id="terminalTableBody" class="divide-y divide-slate-800/50">
                         <tr><td colspan="30" class="p-10 text-center text-slate-500 italic">Syncing with server...</td></tr>
                     </tbody>
@@ -228,7 +207,6 @@
             </div>
         </section>
 
-        <!-- Quick Update Panel -->
         <section class="glass-card p-4 border-l-4 border-l-blue-500">
             <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
@@ -279,8 +257,7 @@
         </section>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 opacity-0 pointer-events-none z-50 shadow-2xl"></div>
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 opacity-0 pointer-events-none z-[200] shadow-2xl"></div>
 
     <script>
         const BASE_API_URL = `https://script.google.com/macros/s/AKfycbxXey0-5WIJqn0u9h5Fpju5MrDdHuXPl1nc8TSZgbtjeLjzBkVD9vV6XJ6qsY7dzo4PrA/exec`;
@@ -298,17 +275,13 @@
             const wrapper = document.getElementById('searchWrapper');
             const input = document.getElementById('tableSearch');
             wrapper.classList.toggle('expanded');
-            if (wrapper.classList.contains('expanded')) {
-                input.focus();
-            }
+            if (wrapper.classList.contains('expanded')) input.focus();
         }
 
         function collapseSearch() {
             const wrapper = document.getElementById('searchWrapper');
             const input = document.getElementById('tableSearch');
-            if (input.value.trim() === '') {
-                wrapper.classList.remove('expanded');
-            }
+            if (input.value.trim() === '') wrapper.classList.remove('expanded');
         }
 
         function updateClock() {
@@ -338,6 +311,22 @@
             } catch(e) { return dateStr; }
         }
 
+        function copyRowData(rowIndex) {
+            const row = filteredData[rowIndex];
+            const headers = sheetHeaders[currentSheet] || [];
+            const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
+            const dbaIdx = headers.findIndex(h => h?.toUpperCase() === 'DBA NAME');
+            const addrIdx = headers.findIndex(h => h?.toUpperCase() === 'ADDRESS');
+            const text = `(TID:- ${row[tidIdx] || '-'}\nM.Name:- ${row[dbaIdx] || '-'}\nAddress:- ${row[addrIdx] || '-'}\n)`;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            showToast("Data Copied!", "bg-blue-600");
+            document.body.removeChild(textArea);
+        }
+
         function fetchSheetData() {
             setStatus('Syncing...', 'bg-blue-500 animate-pulse');
             const syncIcon = document.getElementById('sync-icon');
@@ -350,10 +339,7 @@
                     if (syncIcon) syncIcon.classList.remove('sync-spin');
                     return;
                 }
-                
-                allSheetsData = {};
-                sheetHeaders = {};
-                
+                allSheetsData = {}; sheetHeaders = {};
                 Object.keys(res).forEach(sheetName => {
                     const rows = res[sheetName];
                     if (Array.isArray(rows) && rows.length > 0) {
@@ -361,7 +347,6 @@
                         allSheetsData[sheetName] = rows.slice(1);
                     }
                 });
-
                 const sheetNames = Object.keys(allSheetsData);
                 if (sheetNames.length > 0) {
                     setStatus('Connected', 'bg-emerald-500');
@@ -369,10 +354,8 @@
                     renderDynamicUI(sheetNames);
                     switchSheet(currentSheet);
                 }
-                
                 if (syncIcon) syncIcon.classList.remove('sync-spin');
-                const script = document.getElementById('jsonp-' + callback);
-                if(script) script.remove();
+                document.getElementById('jsonp-' + callback)?.remove();
                 delete window[callback];
             };
 
@@ -398,21 +381,17 @@
             select.innerHTML = '';
             sheetNames.forEach(name => {
                 const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
+                opt.value = name; opt.textContent = name;
                 select.appendChild(opt);
             });
 
             const statsGrid = document.getElementById('stats-grid');
             statsGrid.innerHTML = '';
-            sheetNames.forEach((name, i) => {
+            sheetNames.forEach((name) => {
                 const card = document.createElement('div');
                 card.className = `glass-card p-2 border-b-2 border-blue-500 transition-all hover:bg-slate-800/40 cursor-pointer flex-shrink-0 min-w-[80px]`;
                 card.onclick = () => switchSheet(name);
-                card.innerHTML = `
-                    <p class="text-[8px] font-black uppercase tracking-tighter opacity-70 truncate">${name.replace(' LIVE', '')}</p>
-                    <h3 class="text-sm md:text-base font-black mt-0.5 leading-tight">${(allSheetsData[name] || []).length}</h3>
-                `;
+                card.innerHTML = `<p class="text-[8px] font-black uppercase tracking-tighter opacity-70 truncate">${name.replace(' LIVE', '')}</p><h3 class="text-sm md:text-base font-black mt-0.5 leading-tight">${(allSheetsData[name] || []).length}</h3>`;
                 statsGrid.appendChild(card);
             });
         }
@@ -434,37 +413,46 @@
 
             const isPBL = currentSheet.toUpperCase().includes('PBL');
             const hideForPBL = ['REMARKS', 'CONFIGURE BY'];
-            
             const visibleIndices = headers.map((h, idx) => {
                 if (isPBL && hideForPBL.includes((h || '').toUpperCase())) return null;
                 return idx;
             }).filter(idx => idx !== null);
 
-            let headerHtml = '<tr class="text-slate-400 uppercase font-bold tracking-wider border-b border-slate-700">';
+            // Header Construction with 2-Line Wrap
+            let headerHtml = '<tr class="text-slate-400 uppercase font-black tracking-wider border-b border-slate-700">';
+            headerHtml += `<th class="p-3 sticky-col-copy"><div class="header-wrap-2-lines flex items-center justify-center">COPY</div></th>`;
+            
             visibleIndices.forEach(idx => {
                 const label = headers[idx] || `Col ${idx + 1}`;
                 const lower = label.toLowerCase();
-                let extraClass = "p-3 bg-slate-800 text-[10px]";
-                if (lower.includes('tid') || lower === 'id') extraClass += " sticky-col text-blue-400";
-                headerHtml += `<th class="${extraClass}">${label}</th>`;
+                let extraClass = "p-3 bg-slate-800";
+                let textClass = "header-wrap-2-lines";
+                
+                if (lower.includes('tid') || lower === 'id') {
+                    extraClass += " sticky-col-tid";
+                    textClass += " text-blue-400";
+                }
+                headerHtml += `<th class="${extraClass}"><div class="${textClass}">${label}</div></th>`;
             });
             headerHtml += '</tr>';
             headerRow.innerHTML = headerHtml;
 
             const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
-            const pageData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+            const startIdx = (currentPage - 1) * pageSize;
+            const pageData = filteredData.slice(startIdx, currentPage * pageSize);
 
             let bodyHtml = '';
-            pageData.forEach(row => {
+            pageData.forEach((row, dataIdx) => {
+                const globalIdx = startIdx + dataIdx;
                 bodyHtml += `<tr class="hover:bg-slate-800/30 border-b border-slate-800/20">`;
+                bodyHtml += `<td class="p-3 text-center sticky-col-copy"><button onclick="copyRowData(${globalIdx})" class="copy-row-btn"><i class="fas fa-copy"></i></button></td>`;
                 visibleIndices.forEach(idx => {
                     let val = row[idx] ?? '-';
                     const label = (headers[idx] || '').toUpperCase();
                     let cellClass = "p-3";
                     let content = val;
-                    if (label === 'TID') cellClass += " font-black text-blue-400 sticky-col";
+                    if (label === 'TID') cellClass += " font-black text-blue-400 sticky-col-tid";
                     if (label.includes('DATE')) content = formatDateReadable(val) || '-';
-                    
                     bodyHtml += `<td class="${cellClass}">${content}</td>`;
                 });
                 bodyHtml += `</tr>`;
@@ -480,47 +468,20 @@
         function handleSearch() {
             const query = document.getElementById('tableSearch').value.toLowerCase().trim();
             const baseData = allSheetsData[currentSheet] || [];
-            
-            if (!query) {
-                filteredData = [...baseData];
-            } else {
+            if (!query) filteredData = [...baseData];
+            else {
                 const terms = query.split(',').map(term => term.trim()).filter(term => term !== "");
-                filteredData = baseData.filter(row => {
-                    return terms.some(term => {
-                        return row.some(cellValue => 
-                            String(cellValue || '').toLowerCase().includes(term)
-                        );
-                    });
-                });
+                filteredData = baseData.filter(row => terms.some(term => row.some(cell => String(cell || '').toLowerCase().includes(term))));
             }
-            
-            currentPage = 1; 
-            renderTable();
+            currentPage = 1; renderTable();
         }
 
-        function changePage(dir) {
-            currentPage += dir;
-            renderTable();
-            document.querySelector('.table-container').scrollTop = 0;
-        }
+        function changePage(dir) { currentPage += dir; renderTable(); document.querySelector('.table-container').scrollTop = 0; }
 
         function downloadTableData() {
-            if (!filteredData || filteredData.length === 0) {
-                return showToast("No data to export", "bg-rose-600");
-            }
+            if (!filteredData.length) return showToast("No data to export", "bg-rose-600");
             const headers = sheetHeaders[currentSheet] || [];
-            const remarksIdx = headers.findIndex(h => (h || '').toUpperCase().includes('REMARKS'));
-            const endIdx = remarksIdx !== -1 ? remarksIdx + 1 : headers.length;
-            const exportHeaders = headers.slice(0, endIdx);
-            const exportRows = [exportHeaders];
-            filteredData.forEach(row => {
-                const formattedRow = row.slice(0, endIdx).map((val, idx) => {
-                    const label = (headers[idx] || '').toUpperCase();
-                    if (label.includes('DATE')) return formatDateReadable(val);
-                    return val;
-                });
-                exportRows.push(formattedRow);
-            });
+            const exportRows = [headers, ...filteredData];
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(exportRows);
             XLSX.utils.book_append_sheet(wb, ws, "Results");
@@ -533,76 +494,29 @@
             const targetSheet = document.getElementById('u-sheet').value;
             const indicator = document.getElementById('lookup-indicator');
             const dbaIndicator = document.getElementById('dba-indicator');
-            const psnInput = document.getElementById('u-psn');
             const dateShadowLabel = document.getElementById('u-rdate-shadow');
-            const fields = {
-                rby: document.getElementById('u-rby'),
-                rdate: document.getElementById('u-rdate'),
-                ver: document.getElementById('u-ver'),
-                rem: document.getElementById('u-rem')
-            };
-
-            psnInput.classList.remove('input-success');
-            dateShadowLabel.textContent = ''; 
-            dateShadowLabel.classList.add('opacity-0');
-
-            if (!tidInput || !targetSheet) {
-                indicator.style.opacity = '0';
-                dbaIndicator.style.opacity = '0';
-                Object.values(fields).forEach(el => el.classList.remove('found-shadow'));
-                return;
-            }
-
+            
+            dateShadowLabel.textContent = ''; dateShadowLabel.classList.add('opacity-0');
+            if (!tidInput || !targetSheet) { indicator.style.opacity = '0'; dbaIndicator.style.opacity = '0'; return; }
             const headers = sheetHeaders[targetSheet] || [];
             const dataRows = allSheetsData[targetSheet] || [];
             const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
             const dbaIdx = headers.findIndex(h => h?.toUpperCase() === 'DBA NAME');
-            const rByIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT BY');
             const rDateIdx = headers.findIndex(h => h?.toUpperCase() === 'ROLL-OUT DATE');
-            const verIdx = headers.findIndex(h => h?.toUpperCase() === 'APP. VERSION');
-            const remIdx = headers.findIndex(h => h?.toUpperCase() === 'ENG. REMARKS');
-
             const match = dataRows.find(row => cleanStr(row[tidIdx]) === cleanStr(tidInput));
-
             if (match) {
-                indicator.textContent = "MATCH";
-                indicator.style.opacity = '1';
-                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-blue-500/20 text-blue-400";
-                dbaIndicator.textContent = match[dbaIdx] ? String(match[dbaIdx]).trim() : "NO DBA";
-                dbaIndicator.style.opacity = '1';
-                
-                if (rByIdx !== -1 && match[rByIdx]) { fields.rby.placeholder = String(match[rByIdx]); fields.rby.classList.add('found-shadow'); }
-                if (verIdx !== -1 && match[verIdx]) { fields.ver.placeholder = String(match[verIdx]); fields.ver.classList.add('found-shadow'); }
-                if (remIdx !== -1 && match[remIdx]) { fields.rem.placeholder = String(match[remIdx]); fields.rem.classList.add('found-shadow'); }
-                
-                if (rDateIdx !== -1 && match[rDateIdx] && match[rDateIdx] !== '-' && match[rDateIdx] !== '') { 
+                indicator.textContent = "MATCH"; indicator.style.opacity = '1';
+                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-400";
+                dbaIndicator.textContent = match[dbaIdx] ? String(match[dbaIdx]).trim() : "NO DBA"; dbaIndicator.style.opacity = '1';
+                if (rDateIdx !== -1 && match[rDateIdx] && match[rDateIdx] !== '-') { 
                     const shadowText = formatDateReadable(match[rDateIdx]);
-                    if (shadowText && shadowText !== '-') {
-                        dateShadowLabel.textContent = `(${shadowText})`;
-                        dateShadowLabel.classList.remove('opacity-0');
-                    }
+                    if (shadowText) { dateShadowLabel.textContent = `(${shadowText})`; dateShadowLabel.classList.remove('opacity-0'); }
                 }
             } else {
-                indicator.style.opacity = '1';
-                indicator.textContent = "NOT FOUND";
-                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded transition-all bg-rose-500/10 text-rose-500";
+                indicator.style.opacity = '1'; indicator.textContent = "NOT FOUND";
+                indicator.className = "text-[8px] font-bold uppercase px-2 py-0.5 rounded bg-rose-500/10 text-rose-500";
                 dbaIndicator.style.opacity = '0';
-                Object.values(fields).forEach(el => el.classList.remove('found-shadow'));
             }
-        }
-
-        function showWarning(tid, date, version) {
-            const modal = document.getElementById('warning-modal');
-            const msg = document.getElementById('warning-msg');
-            msg.innerHTML = `TID <b>${tid}</b> has a submission for <b>${date}</b> with Version <b>${version}</b>. Duplicate entries are blocked.`;
-            modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.add('modal-active'), 10);
-        }
-
-        function closeWarning() {
-            const modal = document.getElementById('warning-modal');
-            modal.classList.remove('modal-active');
-            setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
         function submitUpdate() {
@@ -610,50 +524,32 @@
             const tid = document.getElementById('u-tid').value.trim();
             const psnRaw = document.getElementById('u-psn').value.trim();
             const date = document.getElementById('u-rdate').value;
-            const ver = document.getElementById('u-ver').value.trim();
-
-            if(!tid || !psnRaw || !date) return showToast("TID, PSN, & Date Required", "bg-rose-600");
-
+            if(!tid || !psnRaw || !date) return showToast("Required Fields Missing", "bg-rose-600");
             const headers = sheetHeaders[targetSheet] || [];
             const rows = allSheetsData[targetSheet] || [];
             const tidIdx = headers.findIndex(h => h?.toUpperCase() === 'TID');
             const psnIdx = headers.findIndex(h => h?.toUpperCase() === 'POS S/N');
-
             const match = rows.find(r => cleanStr(r[tidIdx]) === cleanStr(tid));
             if (!match) return showToast(`TID ${tid} not found`, "bg-rose-600");
-
-            if (cleanStr(match[psnIdx]) !== cleanStr(psnRaw)) {
-                return showToast(`S/N Mismatch: ${match[psnIdx]}`, "bg-rose-600");
-            }
-
+            if (cleanStr(match[psnIdx]) !== cleanStr(psnRaw)) return showToast(`S/N Mismatch`, "bg-rose-600");
             const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.textContent = "Updating...";
-
+            btn.disabled = true; btn.textContent = "Updating...";
             const callback = 'upd_' + Date.now();
             window[callback] = (res) => {
-                if(res?.success) {
-                    showToast(`Updated ${tid}`, "bg-emerald-600");
-                    fetchSheetData(); 
-                    ['u-tid', 'u-psn', 'u-rby', 'u-rdate', 'u-ver', 'u-rem'].forEach(id => document.getElementById(id).value = '');
-                } else showToast(res?.message || "Fail", "bg-rose-600");
-                btn.disabled = false;
-                btn.textContent = "Update";
-                document.getElementById('jsonp-'+callback)?.remove();
+                if(res?.success) { showToast(`Updated ${tid}`, "bg-emerald-600"); fetchSheetData(); }
+                else showToast(res?.message || "Fail", "bg-rose-600");
+                btn.disabled = false; btn.textContent = "Update"; document.getElementById('jsonp-'+callback)?.remove();
             };
-
             const script = document.createElement('script');
             script.id = 'jsonp-' + callback;
-            script.src = `${BASE_API_URL}?action=updateDeployment&sheetName=${targetSheet}&tid=${tid}&rollBy=${document.getElementById('u-rby').value}&rollDate=${date}&version=${ver}&remarks=${document.getElementById('u-rem').value}&callback=${callback}`;
+            script.src = `${BASE_API_URL}?action=updateDeployment&sheetName=${targetSheet}&tid=${tid}&rollBy=${document.getElementById('u-rby').value}&rollDate=${date}&version=${document.getElementById('u-ver').value}&remarks=${document.getElementById('u-rem').value}&callback=${callback}`;
             document.body.appendChild(script);
         }
 
         function showToast(msg, color) {
             const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = `fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 z-50 shadow-2xl ${color}`;
-            t.style.opacity = '1';
-            setTimeout(() => t.style.opacity = '0', 3000);
+            t.textContent = msg; t.className = `fixed bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all duration-300 z-[200] shadow-2xl ${color}`;
+            t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 3000);
         }
 
         window.onload = fetchSheetData;
